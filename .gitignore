@@ -1,0 +1,72 @@
+# ============================================================
+# .gitignore - Proyecto Astronomía Programación III
+# ============================================================
+
+# ---------- C# / .NET ----------
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.pdb
+*.dll
+*.exe
+project.lock.json
+project.fragment.lock.json
+artifacts/
+*.cache
+.vs/
+
+# ---------- Node / Frontend tooling ----------
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+.env
+.env.local
+
+# ---------- IDE / Editor ----------
+.vscode/
+.idea/
+*.swp
+*~
+
+# ---------- Sistema operativo ----------
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---------- Base de datos (archivos locales) ----------
+*.sqlite
+*.db
+
+# ---------- Secretos y configuración local ----------
+appsettings.Development.json
+appsettings.Local.json
+secrets.json
+*.pem
+*.key
+
+# ---------- Logs y temporales ----------
+*.log
+logs/
+tmp/
+temp/
+
+# ---------- Compilados del frontend ----------
+dist/
+build/
+
+# ---------- Herramientas de asistencia / IA ----------
+.claude/
+.claude-*
+CLAUDE.md
+**/CLAUDE.md
+.cursor/
+.aider*
+.github/copilot-instructions.md
+
+# ---------- otros ----------
+RequerimientoFinal.pdf
