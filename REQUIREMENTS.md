@@ -128,29 +128,84 @@ cd proyecto-astronomia-progra3
 
 ### 7.2 Crear y configurar la base de datos
 
-En SSMS o Azure Data Studio, conectarse a `localhost` y ejecutar:
+#### Paso A — Encontrar el nombre de tu servidor SQL Server
 
+1. Abrir **SSMS** (SQL Server Management Studio).
+2. En el cuadro "Nombre del servidor" del diálogo de conexión, el nombre que aparece es tu servidor (ej. `ELIZANDRO`, `DESKTOP-ABC123`, `localhost\SQLEXPRESS`).
+3. Anotar ese nombre — se usará en el paso C.
+
+> **Autenticación recomendada:** usar **Autenticación de Windows** (no requiere contraseña). Si usas autenticación SQL Server (`sa`), necesitarás la contraseña del usuario.
+
+#### Paso B — Ejecutar los scripts SQL en orden
+
+Con SSMS abierto y conectado a tu servidor, ejecutar los siguientes archivos **en este orden**. Importante: leer por qué existe cada uno.
+
+---
+
+**Script 1 — `database/schema.sql`** *(ejecutar conectado a `AstronomiaDB` o crear la BD primero)*
+
+**¿Por qué existe?**
+Define la **estructura** de la base de datos: crea las 6 tablas del sistema (`tipos_objeto`, `constelaciones`, `sistemas_planetarios`, `objetos_astronomicos`, `relaciones`, `consultas_log`), sus columnas, tipos de dato, claves primarias, claves foráneas e índices de búsqueda. Sin este script, la base de datos existe pero está vacía — no hay dónde guardar nada.
+
+También contiene sentencias `DROP TABLE IF EXISTS` al inicio para poder volver a ejecutarlo en cualquier momento durante el desarrollo sin errores (borra y recrea las tablas limpias).
+
+**Cómo ejecutarlo:**
+1. En SSMS → **Nueva consulta**
+2. Si `AstronomiaDB` no existe aún, ejecutar primero:
+   ```sql
+   CREATE DATABASE AstronomiaDB;
+   ```
+3. En el desplegable de base de datos (arriba izquierda), seleccionar **`AstronomiaDB`**
+4. `Archivo → Abrir → Archivo...` → seleccionar `database/schema.sql`
+5. Clic en **Ejecutar** (F5)
+6. Resultado esperado: `Los comandos se han completado correctamente.`
+
+---
+
+**Script 2 — `database/seed.sql`** *(ejecutar después de schema.sql, en `AstronomiaDB`)*
+
+**¿Por qué existe?**
+Inserta **datos iniciales de prueba** para que la aplicación tenga información desde el primer día sin necesidad de conectarse a la API externa. Incluye: 7 tipos de objeto, 5 constelaciones, 3 sistemas planetarios, 13 objetos astronómicos (Sol, 8 planetas, Próxima Centauri, TRAPPIST-1 y 2 exoplanetas) y 8 relaciones entre ellos que forman el grafo inicial.
+
+Sin este script, la app arrancaría con el catálogo vacío y habría que importar datos desde la API externa antes de poder probar cualquier funcionalidad.
+
+**Cómo ejecutarlo:**
+1. En SSMS → **Nueva consulta**
+2. Desplegable → **`AstronomiaDB`** (verificar antes de ejecutar)
+3. `Archivo → Abrir` → seleccionar `database/seed.sql`
+4. Clic en **Ejecutar** (F5)
+5. Resultado esperado: múltiples líneas de `(N filas afectadas)` sin errores rojos.
+
+**Verificar que quedó bien:**
 ```sql
-CREATE DATABASE AstronomiaDB;
+USE AstronomiaDB;
+SELECT COUNT(*) AS total_objetos FROM objetos_astronomicos;
+-- Debe devolver: 13
 ```
 
-Luego, abrir y ejecutar en orden:
-1. `database/schema.sql` — crea las tablas
-2. `database/seed.sql` — carga datos iniciales
+---
 
-### 7.3 Configurar la cadena de conexión
+#### Paso C — Configurar la cadena de conexión
 
-Editar `backend/AstronomiaApp/appsettings.json` con los datos de tu instancia SQL Server:
+Editar `backend/AstronomiaApp/appsettings.json` — reemplazar `TU_SERVIDOR` con el nombre encontrado en el Paso A:
 
 ```json
 {
   "ConnectionStrings": {
-    "AstronomiaDB": "Server=localhost;Database=AstronomiaDB;Trusted_Connection=True;TrustServerCertificate=True;"
+    "AstronomiaDB": "Server=TU_SERVIDOR;Database=AstronomiaDB;Trusted_Connection=True;TrustServerCertificate=True;"
   }
 }
 ```
 
-> Si usas SQL Server Express la instancia puede llamarse `localhost\SQLEXPRESS`. Ajustar `Server=localhost\SQLEXPRESS`.
+**Ejemplos según instalación:**
+
+| Tipo de instalación | Valor de `Server` |
+|--------------------|--------------------|
+| SQL Server Developer (instalación por defecto) | `NOMBRE_PC` (ej. `ELIZANDRO`) |
+| SQL Server Express | `NOMBRE_PC\SQLEXPRESS` |
+| SQL Server local con instancia nombrada | `localhost\NOMBRE_INSTANCIA` |
+
+> `Trusted_Connection=True` usa **Autenticación de Windows** — no requiere usuario ni contraseña en el archivo. Si tu equipo usa autenticación SQL Server, cambiar a: `User Id=sa;Password=TU_PASSWORD;`
 
 ### 7.4 Ejecutar el prototipo de API (prueba de Fase 1)
 
