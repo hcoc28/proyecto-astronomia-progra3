@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] — Astronomía</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/estilos.css" asp-append-version="true" />
+</head>
+<body class="bg-dark text-light">
+    <header>
+        <nav class="navbar navbar-expand-sm navbar-dark bg-black border-bottom border-secondary mb-3">
+            <div class="container-fluid">
+                <a class="navbar-brand fw-bold text-warning" asp-controller="Objetos" asp-action="Index">
+                    &#9733; Astronomía
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                        data-bs-target=".navbar-collapse" aria-label="Menú">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="navbar-collapse collapse">
+                    <ul class="navbar-nav flex-grow-1">
+                        <li class="nav-item">
+                            <a class="nav-link" asp-controller="Objetos" asp-action="Index">Catálogo</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-controller="Objetos" asp-action="Buscar">Buscar</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-controller="Grafo" asp-action="Index">Grafo</a>
+                        </li>
+                    </ul>
+                    <form class="d-flex" asp-controller="Objetos" asp-action="Buscar" method="get">
+                        <input class="form-control form-control-sm me-2 bg-secondary text-light border-0"
+                               type="search" name="nombre" placeholder="Buscar objeto..." />
+                        <button class="btn btn-sm btn-warning" type="submit">Ir</button>
+                    </form>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <div class="container">
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+    </div>
+
+    <footer class="border-top border-secondary footer text-muted mt-4 py-2">
+        <div class="container text-center small">
+            Sistema de Exploración Astronómica &mdash; Programación III &mdash; UMG Cobán 2026
+        </div>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/api.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

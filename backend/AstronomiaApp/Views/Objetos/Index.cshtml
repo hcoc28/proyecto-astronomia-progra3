@@ -1,0 +1,108 @@
+@model AstronomiaApp.Models.ViewModels.CatalogoViewModel
+@{
+    ViewData["Title"] = "Catálogo de Objetos";
+    var tipos = ViewBag.Tipos as IEnumerable<AstronomiaApp.Models.TipoObjeto> ?? Enumerable.Empty<AstronomiaApp.Models.TipoObjeto>();
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="text-warning mb-0">Catálogo Astronómico</h2>
+    <span class="badge bg-secondary">@Model.Total objetos</span>
+</div>
+
+<!-- Filtros y ordenamiento -->
+<div class="card bg-secondary border-0 mb-3">
+    <div class="card-body py-2">
+        <div class="row g-2 align-items-center">
+            <div class="col-auto">
+                <strong class="text-light small">Filtrar por tipo:</strong>
+            </div>
+            <div class="col-auto">
+                <a asp-action="Index" class="btn btn-sm @(Model.FiltroTipo == null ? "btn-warning" : "btn-outline-light")">Todos</a>
+            </div>
+            @foreach (var tipo in tipos)
+            {
+                <div class="col-auto">
+                    <a asp-action="Index" asp-route-tipo="@tipo.Nombre"
+                       class="btn btn-sm @(Model.FiltroTipo == tipo.Nombre ? "btn-warning" : "btn-outline-light")">
+                        @tipo.Nombre
+                    </a>
+                </div>
+            }
+            <div class="col-auto ms-auto">
+                <span class="text-muted small">Ordenar: </span>
+                @foreach (var campo in new[] { "distancia", "masa", "radio", "temperatura" })
+                {
+                    <a asp-action="Ordenar" asp-route-por="@campo" asp-route-tipo="@Model.FiltroTipo"
+                       asp-route-direccion="@(Model.OrdenPor == campo && Model.Direccion == "asc" ? "desc" : "asc")"
+                       class="btn btn-sm btn-outline-info me-1 @(Model.OrdenPor == campo ? "active" : "")">
+                        @campo @(Model.OrdenPor == campo ? (Model.Direccion == "asc" ? "↑" : "↓") : "")
+                    </a>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabla de objetos -->
+@if (!Model.Objetos.Any())
+{
+    <div class="alert alert-info">
+        No hay objetos cargados.
+        <button class="btn btn-sm btn-warning ms-2" onclick="importarDatos()">Importar desde API</button>
+    </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-dark table-hover table-sm">
+            <thead class="table-warning text-dark">
+                <tr>
+                    <th>Nombre</th>
+                    <th>Tipo</th>
+                    <th>Radio (km)</th>
+                    <th>Distancia (UA)</th>
+                    <th>Temp. (K)</th>
+                    <th>Sistema</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var obj in Model.Objetos)
+                {
+                    <tr>
+                        <td class="fw-bold">@obj.Nombre</td>
+                        <td><span class="badge bg-info text-dark">@obj.Tipo</span></td>
+                        <td>@(obj.RadioKm.HasValue ? obj.RadioKm.Value.ToString("N0") : "—")</td>
+                        <td>@(obj.DistanciaTierraAl.HasValue ? obj.DistanciaTierraAl.Value.ToString("N4") : "—")</td>
+                        <td>@(obj.TemperaturaK.HasValue ? obj.TemperaturaK.Value.ToString("N0") : "—")</td>
+                        <td class="text-muted small">@(obj.Sistema ?? "—")</td>
+                        <td>
+                            <a asp-action="Detalle" asp-route-id="@obj.Id"
+                               class="btn btn-xs btn-outline-warning btn-sm">Ver</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@section Scripts {
+<script>
+async function importarDatos() {
+    const btn = event.target;
+    btn.disabled = true;
+    btn.textContent = 'Importando...';
+    try {
+        const r = await fetch('/api/admin/importar', { method: 'POST' });
+        const d = await r.json();
+        alert(`Importados: ${d.importados}, Actualizados: ${d.actualizados}, Errores: ${d.errores}`);
+        location.reload();
+    } catch(e) {
+        alert('Error al importar: ' + e.message);
+        btn.disabled = false;
+        btn.textContent = 'Importar desde API';
+    }
+}
+</script>
+}

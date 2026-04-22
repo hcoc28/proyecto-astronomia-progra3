@@ -1,0 +1,96 @@
+@model AstronomiaApp.Models.ViewModels.ObjetoViewModel
+@{
+    ViewData["Title"] = Model.Nombre;
+}
+
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-action="Index" class="text-warning">Catálogo</a></li>
+        <li class="breadcrumb-item active text-light">@Model.Nombre</li>
+    </ol>
+</nav>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card bg-secondary border-0 mb-3">
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                    <h2 class="text-warning mb-0 me-3">@Model.Nombre</h2>
+                    <span class="badge bg-info text-dark fs-6">@Model.Tipo</span>
+                </div>
+
+                @if (!string.IsNullOrEmpty(Model.Descripcion))
+                {
+                    <p class="text-light">@Model.Descripcion</p>
+                }
+
+                <table class="table table-dark table-sm mt-3">
+                    <tbody>
+                        <tr>
+                            <th class="text-warning" style="width:40%">Masa</th>
+                            <td>@(Model.MasaKg.HasValue ? $"{Model.MasaKg.Value:E3} kg" : "—")</td>
+                        </tr>
+                        <tr>
+                            <th class="text-warning">Radio medio</th>
+                            <td>@(Model.RadioKm.HasValue ? $"{Model.RadioKm.Value:N0} km" : "—")</td>
+                        </tr>
+                        <tr>
+                            <th class="text-warning">Distancia a la Tierra</th>
+                            <td>@(Model.DistanciaTierraAl.HasValue ? $"{Model.DistanciaTierraAl.Value:N4} UA" : "—")</td>
+                        </tr>
+                        <tr>
+                            <th class="text-warning">Temperatura</th>
+                            <td>@(Model.TemperaturaK.HasValue ? $"{Model.TemperaturaK.Value:N0} K" : "—")</td>
+                        </tr>
+                        <tr>
+                            <th class="text-warning">Luminosidad</th>
+                            <td>@(Model.Luminosidad.HasValue ? $"{Model.Luminosidad.Value:N4} L☉" : "—")</td>
+                        </tr>
+                        <tr>
+                            <th class="text-warning">Sistema planetario</th>
+                            <td>@(Model.Sistema ?? "—")</td>
+                        </tr>
+                        <tr>
+                            <th class="text-warning">Constelación</th>
+                            <td>@(Model.Constelacion ?? "—")</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card bg-secondary border-0 mb-3">
+            <div class="card-header text-warning fw-bold">Relaciones</div>
+            <div class="card-body" id="vecinos-container">
+                <div class="text-muted small">Cargando...</div>
+            </div>
+        </div>
+
+        <a asp-action="Index" class="btn btn-outline-light btn-sm me-2">← Catálogo</a>
+        <a asp-controller="Grafo" asp-action="Index" class="btn btn-outline-warning btn-sm">Ver en Grafo</a>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+(async function () {
+    const id = @Model.Id;
+    const r = await fetch(`/api/grafo/vecinos/${id}`);
+    const d = await r.json();
+    const cont = document.getElementById('vecinos-container');
+    if (!d.vecinos || d.vecinos.length === 0) {
+        cont.innerHTML = '<span class="text-muted small">Sin relaciones registradas.</span>';
+        return;
+    }
+    cont.innerHTML = d.vecinos.map(v =>
+        `<div class="mb-2">
+            <a href="/Objetos/Detalle/${v.id}" class="text-warning fw-bold">${v.nombre}</a>
+            <span class="badge bg-dark text-info ms-1">${v.tipoRelacion || 'relación'}</span>
+            <div class="text-muted small">${v.distanciaAl ? v.distanciaAl.toFixed(4) + ' UA' : ''}</div>
+         </div>`
+    ).join('');
+})();
+</script>
+}

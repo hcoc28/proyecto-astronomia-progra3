@@ -1,0 +1,80 @@
+@model AstronomiaApp.Models.ViewModels.GrafoViewModel
+@{
+    ViewData["Title"] = "Grafo de Relaciones";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="text-warning mb-0">Grafo de Relaciones Astronómicas</h2>
+    <div class="text-muted small">
+        @Model.Nodos.Count() nodos &bull; @Model.Aristas.Count() aristas
+    </div>
+</div>
+
+<!-- Panel de cálculo de ruta -->
+<div class="card bg-secondary border-0 mb-3">
+    <div class="card-body">
+        <h6 class="text-warning">Calcular ruta (Dijkstra)</h6>
+        <div class="row g-2 align-items-center">
+            <div class="col-md-4">
+                <select id="sel-origen" class="form-select form-select-sm bg-dark text-light border-secondary">
+                    <option value="">— Origen —</option>
+                    @foreach (var n in Model.Nodos)
+                    {
+                        <option value="@n.Id">@n.Nombre</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-4">
+                <select id="sel-destino" class="form-select form-select-sm bg-dark text-light border-secondary">
+                    <option value="">— Destino —</option>
+                    @foreach (var n in Model.Nodos)
+                    {
+                        <option value="@n.Id">@n.Nombre</option>
+                    }
+                </select>
+            </div>
+            <div class="col-auto">
+                <button class="btn btn-sm btn-warning" onclick="calcularRuta()">Calcular</button>
+            </div>
+        </div>
+        <div id="resultado-ruta" class="mt-2 text-light small"></div>
+    </div>
+</div>
+
+<!-- Canvas del grafo -->
+<div class="card bg-black border border-secondary">
+    <div class="card-body p-0">
+        <canvas id="grafo-canvas" width="900" height="500"
+                style="width:100%; height:500px; cursor:grab;"></canvas>
+    </div>
+</div>
+
+<!-- Datos del grafo en JSON para el script -->
+<script id="grafo-data" type="application/json">
+{
+    "nodos": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Nodos.Select(n => new { id = n.Id, nombre = n.Nombre, tipo = n.Tipo }))),
+    "aristas": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Aristas.Select(a => new { origen = a.Origen, destino = a.Destino, tipo = a.TipoRelacion, peso = a.Peso })))
+}
+</script>
+
+@section Scripts {
+<script src="~/js/grafo-viewer.js" asp-append-version="true"></script>
+<script>
+async function calcularRuta() {
+    const origen = document.getElementById('sel-origen').value;
+    const destino = document.getElementById('sel-destino').value;
+    const div = document.getElementById('resultado-ruta');
+    if (!origen || !destino) { div.textContent = 'Selecciona origen y destino.'; return; }
+    try {
+        const r = await fetch(`/api/grafo/ruta?origen=${origen}&destino=${destino}`);
+        if (!r.ok) { div.innerHTML = '<span class="text-danger">No existe ruta entre esos objetos.</span>'; return; }
+        const d = await r.json();
+        div.innerHTML = `<strong class="text-warning">Ruta:</strong> ${d.ruta.join(' → ')}
+            &nbsp;|&nbsp; <strong>Distancia total:</strong> ${d.distanciaTotal.toFixed(4)} UA
+            &nbsp;|&nbsp; <strong>Saltos:</strong> ${d.saltos}`;
+    } catch(e) {
+        div.innerHTML = '<span class="text-danger">Error al calcular ruta.</span>';
+    }
+}
+</script>
+}

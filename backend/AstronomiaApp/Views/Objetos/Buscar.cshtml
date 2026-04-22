@@ -1,0 +1,71 @@
+@model AstronomiaApp.Models.ViewModels.BusquedaViewModel
+@{
+    ViewData["Title"] = $"Búsqueda: {Model.Termino}";
+}
+
+<h2 class="text-warning mb-3">Resultados de búsqueda</h2>
+
+<div class="mb-3">
+    <form asp-action="Buscar" method="get" class="d-flex gap-2">
+        <input name="nombre" value="@Model.Termino"
+               class="form-control bg-secondary text-light border-0"
+               placeholder="Nombre del objeto..." />
+        <button type="submit" class="btn btn-warning">Buscar</button>
+    </form>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(Model.Termino))
+{
+    <div class="mb-2">
+        @if (Model.BusquedaExacta)
+        {
+            <span class="badge bg-success">Coincidencia exacta (tabla hash)</span>
+        }
+        else
+        {
+            <span class="badge bg-secondary">Búsqueda parcial en lista enlazada</span>
+        }
+        <span class="ms-2 text-muted small">@Model.TotalEncontrados resultado(s) para "<strong class="text-light">@Model.Termino</strong>"</span>
+    </div>
+
+    @if (!Model.Resultados.Any())
+    {
+        <div class="alert alert-dark border border-secondary">
+            No se encontraron objetos que coincidan con "<strong>@Model.Termino</strong>".
+        </div>
+    }
+    else
+    {
+        <div class="row row-cols-1 row-cols-md-3 g-3">
+            @foreach (var obj in Model.Resultados)
+            {
+                <div class="col">
+                    <div class="card bg-secondary border-0 h-100">
+                        <div class="card-body">
+                            <h5 class="card-title text-warning">@obj.Nombre</h5>
+                            <span class="badge bg-info text-dark mb-2">@obj.Tipo</span>
+                            <p class="card-text text-muted small">
+                                @if (obj.RadioKm.HasValue)
+                                {
+                                    <span>Radio: @obj.RadioKm.Value.ToString("N0") km</span><br />
+                                }
+                                @if (obj.DistanciaTierraAl.HasValue)
+                                {
+                                    <span>Distancia: @obj.DistanciaTierraAl.Value.ToString("N4") UA</span><br />
+                                }
+                                @if (!string.IsNullOrEmpty(obj.Sistema))
+                                {
+                                    <span>Sistema: @obj.Sistema</span>
+                                }
+                            </p>
+                        </div>
+                        <div class="card-footer bg-transparent border-0">
+                            <a asp-action="Detalle" asp-route-id="@obj.Id"
+                               class="btn btn-sm btn-outline-warning">Ver detalle</a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+}
