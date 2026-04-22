@@ -1,13 +1,15 @@
-# Contrato de API Interna (Backend ↔ Frontend)
+# Contrato de Rutas y API (ASP.NET Core MVC)
 
-Este documento define los endpoints REST que expondrá el backend en C#. El frontend los consumirá vía `fetch()`. **Mientras el backend no esté listo, el frontend puede trabajar con datos mock que respeten estas estructuras.**
+Este documento define las rutas MVC (que devuelven Razor Views) y los endpoints API JSON (para llamadas AJAX desde el JavaScript del wwwroot). **Mientras el backend no esté listo, el Integrante 3 puede crear las vistas con datos mock que respeten estas estructuras.**
 
 ---
 
 ## Convenciones generales
 
-- **Base URL (desarrollo):** `http://localhost:5000/api`
-- **Formato de intercambio:** JSON en requests y responses
+- **URL base (desarrollo):** `http://localhost:5000`
+- **Rutas MVC:** devuelven Razor Views — navegación normal del navegador.
+- **Rutas API (`/api/...`):** devuelven JSON — llamadas `fetch()` desde JavaScript.
+- **Formato de intercambio:** JSON en requests y responses (rutas API)
 - **Codificación:** UTF-8
 - **Nombres de campos:** camelCase en JSON (ej. `distanciaTierraAl`)
 - **Fechas:** ISO 8601 (`2026-04-15T14:30:00Z`)
@@ -34,7 +36,22 @@ Este documento define los endpoints REST que expondrá el backend en C#. El fron
 
 ---
 
-## 1. Endpoints de Objetos Astronómicos
+## 0. Rutas MVC (devuelven Razor Views)
+
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| GET | `/` o `/Objetos` | Página principal — catálogo de objetos |
+| GET | `/Objetos/Detalle/{id}` | Vista detallada de un objeto astronómico |
+| GET | `/Objetos/Buscar?nombre=...` | Página de resultados de búsqueda |
+| GET | `/Objetos/Ordenar?por=distancia` | Catálogo ordenado por atributo |
+| GET | `/Grafo` | Visualización del grafo de relaciones |
+| GET | `/Admin/Importar` | Página de importación desde API externa |
+
+> Estas rutas las maneja el MVC Controller devolviendo `View(modelo)`. El navegador recibe HTML completo.
+
+---
+
+## 1. Endpoints de Objetos Astronómicos (JSON / AJAX)
 
 ### 1.1 Listar todos los objetos
 
@@ -105,7 +122,7 @@ GET /api/objetos/buscar?nombre={texto}
 
 **Comportamiento:**
 - Busca coincidencias exactas primero (usa **tabla hash**).
-- Si no encuentra, hace búsqueda parcial `ILIKE` en BD.
+- Si no encuentra, hace búsqueda parcial `LIKE` en SQL Server.
 
 **Respuesta 200:**
 ```json
@@ -359,10 +376,10 @@ GET /api/health
 
 ## 7. CORS
 
-Se habilitará CORS en el backend para permitir que el frontend (puerto 8080 u otro) haga peticiones al backend (puerto 5000):
+Con ASP.NET Core MVC, las Razor Views y los API endpoints comparten el mismo origen (`localhost:5000`), por lo que **CORS no se requiere para las llamadas AJAX internas**. Sin embargo, se configura por si en el futuro se consultan los endpoints desde una herramienta externa (Postman, etc.):
 
 ```csharp
-// En Program.cs
+// En Program.cs (opcional para desarrollo)
 builder.Services.AddCors(options => {
     options.AddDefaultPolicy(policy =>
         policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());

@@ -1,7 +1,8 @@
 # Modelo de Base de Datos
 
-Base de datos: **PostgreSQL 15+**
-Nombre: `astronomia_db`
+Base de datos: **SQL Server** (2019 o superior)
+Nombre: `AstronomiaDB`
+ORM: Entity Framework Core con provider `Microsoft.EntityFrameworkCore.SqlServer`
 
 ---
 
@@ -11,9 +12,9 @@ Nombre: `astronomia_db`
 ┌──────────────────────────────┐
 │  tipos_objeto                │
 │──────────────────────────────│
-│ PK id              SERIAL    │
-│    nombre          VARCHAR   │  ← "Planeta", "Estrella", "Galaxia", etc.
-│    descripcion     TEXT      │
+│ PK id              INT IDENTITY│
+│    nombre          NVARCHAR  │  ← "Planeta", "Estrella", "Galaxia", etc.
+│    descripcion     NVARCHAR(MAX)│
 └──────────────┬───────────────┘
                │ 1
                │
@@ -21,9 +22,9 @@ Nombre: `astronomia_db`
 ┌──────────────▼──────────────────────────────┐
 │  objetos_astronomicos                       │
 │─────────────────────────────────────────────│
-│ PK id                      SERIAL           │
+│ PK id                      INT IDENTITY     │
 │ FK tipo_id                 INT              │──► tipos_objeto
-│    nombre                  VARCHAR UNIQUE   │
+│    nombre                  NVARCHAR UNIQUE  │
 │    masa_kg                 NUMERIC(30,5)    │
 │    radio_km                NUMERIC(20,5)    │
 │    distancia_tierra_al     NUMERIC(20,5)    │  (años luz)
@@ -31,8 +32,8 @@ Nombre: `astronomia_db`
 │    luminosidad             NUMERIC(20,5)    │
 │ FK sistema_id              INT NULL         │──► sistemas_planetarios
 │ FK constelacion_id         INT NULL         │──► constelaciones
-│    descripcion             TEXT             │
-│    fecha_creacion          TIMESTAMP        │
+│    descripcion             NVARCHAR(MAX)    │
+│    fecha_creacion          DATETIME2        │
 └──────────────┬──────────────────────────────┘
                │
                │ (origen y destino)
@@ -40,10 +41,10 @@ Nombre: `astronomia_db`
 ┌──────────────▼─────────────────────────┐
 │  relaciones                            │
 │────────────────────────────────────────│
-│ PK id                    SERIAL        │
+│ PK id                    INT IDENTITY  │
 │ FK origen_id             INT           │──► objetos_astronomicos
 │ FK destino_id            INT           │──► objetos_astronomicos
-│    tipo_relacion         VARCHAR       │  ← "orbita", "gravitacional", "cercania"
+│    tipo_relacion         NVARCHAR(30)  │  ← "orbita", "gravitacional", "cercania"
 │    distancia_al          NUMERIC(20,5) │  (años luz)
 │    peso                  NUMERIC(15,5) │  (para algoritmo de grafos)
 └────────────────────────────────────────┘
@@ -51,30 +52,30 @@ Nombre: `astronomia_db`
 ┌────────────────────────────────────────┐
 │  sistemas_planetarios                  │
 │────────────────────────────────────────│
-│ PK id                    SERIAL        │
-│    nombre                VARCHAR UNIQUE│
+│ PK id                    INT IDENTITY  │
+│    nombre                NVARCHAR UNIQUE│
 │ FK estrella_central_id   INT NULL      │──► objetos_astronomicos
-│    descripcion           TEXT          │
+│    descripcion           NVARCHAR(MAX) │
 └────────────────────────────────────────┘
 
 ┌────────────────────────────────────────┐
 │  constelaciones                        │
 │────────────────────────────────────────│
-│ PK id                    SERIAL        │
-│    nombre                VARCHAR UNIQUE│
-│    abreviatura           VARCHAR(10)   │
-│    descripcion           TEXT          │
+│ PK id                    INT IDENTITY  │
+│    nombre                NVARCHAR UNIQUE│
+│    abreviatura           NVARCHAR(10)  │
+│    descripcion           NVARCHAR(MAX) │
 └────────────────────────────────────────┘
 
 ┌────────────────────────────────────────┐
 │  consultas_log                         │
 │────────────────────────────────────────│
-│ PK id                    SERIAL        │
-│    usuario               VARCHAR       │
-│    tipo_consulta         VARCHAR       │
-│    parametros            JSONB         │
+│ PK id                    INT IDENTITY  │
+│    usuario               NVARCHAR(50)  │
+│    tipo_consulta         NVARCHAR(50)  │
+│    parametros            NVARCHAR(MAX) │  ← JSON serializado
 │    resultado_count       INT           │
-│    fecha                 TIMESTAMP     │
+│    fecha                 DATETIME2     │
 └────────────────────────────────────────┘
 ```
 
@@ -87,57 +88,57 @@ Catálogo de tipos de objetos astronómicos (planeta, estrella, galaxia, agujero
 
 | Campo | Tipo | Descripción |
 |-------|------|-------------|
-| `id` | SERIAL PK | Identificador único |
-| `nombre` | VARCHAR(50) | Nombre del tipo (único) |
-| `descripcion` | TEXT | Descripción general |
+| `id` | INT IDENTITY PK | Identificador único |
+| `nombre` | NVARCHAR(50) | Nombre del tipo (único) |
+| `descripcion` | NVARCHAR(MAX) | Descripción general |
 
 ### 2.2 `objetos_astronomicos`
 Tabla principal del sistema. Cada fila es un objeto único del universo.
 
 | Campo | Tipo | Descripción |
 |-------|------|-------------|
-| `id` | SERIAL PK | Identificador único |
+| `id` | INT IDENTITY PK | Identificador único |
 | `tipo_id` | INT FK | Referencia a `tipos_objeto` |
-| `nombre` | VARCHAR(100) UNIQUE | Nombre del objeto (ej. "Marte") |
-| `masa_kg` | NUMERIC(30,5) | Masa en kilogramos (notación científica soportada) |
+| `nombre` | NVARCHAR(100) UNIQUE | Nombre del objeto (ej. "Marte") |
+| `masa_kg` | NUMERIC(30,5) | Masa en kilogramos |
 | `radio_km` | NUMERIC(20,5) | Radio en kilómetros |
 | `distancia_tierra_al` | NUMERIC(20,5) | Distancia a la Tierra en años luz |
 | `temperatura_k` | NUMERIC(12,2) | Temperatura superficial en Kelvin |
 | `luminosidad` | NUMERIC(20,5) | Luminosidad (solar = 1.0) |
 | `sistema_id` | INT FK NULL | Sistema planetario al que pertenece |
 | `constelacion_id` | INT FK NULL | Constelación visible |
-| `descripcion` | TEXT | Texto libre |
-| `fecha_creacion` | TIMESTAMP | Fecha de inserción en la BD |
+| `descripcion` | NVARCHAR(MAX) | Texto libre |
+| `fecha_creacion` | DATETIME2 | Fecha de inserción en la BD |
 
 ### 2.3 `sistemas_planetarios`
 Agrupa objetos que orbitan una estrella central.
 
 | Campo | Tipo | Descripción |
 |-------|------|-------------|
-| `id` | SERIAL PK | Identificador único |
-| `nombre` | VARCHAR(100) UNIQUE | Nombre del sistema (ej. "Sistema Solar") |
+| `id` | INT IDENTITY PK | Identificador único |
+| `nombre` | NVARCHAR(100) UNIQUE | Nombre del sistema (ej. "Sistema Solar") |
 | `estrella_central_id` | INT FK NULL | Estrella central del sistema |
-| `descripcion` | TEXT | Texto libre |
+| `descripcion` | NVARCHAR(MAX) | Texto libre |
 
 ### 2.4 `constelaciones`
 Agrupaciones visuales de estrellas.
 
 | Campo | Tipo | Descripción |
 |-------|------|-------------|
-| `id` | SERIAL PK | Identificador único |
-| `nombre` | VARCHAR(100) UNIQUE | Nombre (ej. "Orion") |
-| `abreviatura` | VARCHAR(10) | Abreviatura oficial (ej. "Ori") |
-| `descripcion` | TEXT | Texto libre |
+| `id` | INT IDENTITY PK | Identificador único |
+| `nombre` | NVARCHAR(100) UNIQUE | Nombre (ej. "Orion") |
+| `abreviatura` | NVARCHAR(10) | Abreviatura oficial (ej. "Ori") |
+| `descripcion` | NVARCHAR(MAX) | Texto libre |
 
 ### 2.5 `relaciones`
 Tabla puente para el grafo — almacena aristas entre objetos.
 
 | Campo | Tipo | Descripción |
 |-------|------|-------------|
-| `id` | SERIAL PK | Identificador único |
+| `id` | INT IDENTITY PK | Identificador único |
 | `origen_id` | INT FK | Objeto origen |
 | `destino_id` | INT FK | Objeto destino |
-| `tipo_relacion` | VARCHAR(30) | Tipo (orbita / gravitacional / cercania) |
+| `tipo_relacion` | NVARCHAR(30) | Tipo (orbita / gravitacional / cercania) |
 | `distancia_al` | NUMERIC(20,5) | Distancia en años luz |
 | `peso` | NUMERIC(15,5) | Valor usado como peso en el grafo |
 
@@ -146,12 +147,12 @@ Registro de consultas del usuario (útil para estadísticas y auditoría).
 
 | Campo | Tipo | Descripción |
 |-------|------|-------------|
-| `id` | SERIAL PK | Identificador único |
-| `usuario` | VARCHAR(50) | Usuario o sesión |
-| `tipo_consulta` | VARCHAR(50) | Tipo (búsqueda / ordenamiento / grafo) |
-| `parametros` | JSONB | Parámetros enviados |
+| `id` | INT IDENTITY PK | Identificador único |
+| `usuario` | NVARCHAR(50) | Usuario o sesión |
+| `tipo_consulta` | NVARCHAR(50) | Tipo (búsqueda / ordenamiento / grafo) |
+| `parametros` | NVARCHAR(MAX) | JSON serializado con los parámetros |
 | `resultado_count` | INT | Cantidad de resultados devueltos |
-| `fecha` | TIMESTAMP | Momento de la consulta |
+| `fecha` | DATETIME2 | Momento de la consulta |
 
 ---
 
@@ -170,10 +171,9 @@ Para acelerar consultas frecuentes:
 ## 4. Reglas de integridad
 
 - Todo objeto astronómico debe tener un `tipo_id` válido.
-- Las relaciones no pueden tener `origen_id = destino_id` (se valida con CHECK).
+- Las relaciones no pueden tener `origen_id = destino_id` (CHECK constraint).
 - `nombre` es único en `objetos_astronomicos`, `sistemas_planetarios` y `constelaciones`.
-- `ON DELETE CASCADE` en relaciones: si se elimina un objeto, sus aristas también.
-- `ON DELETE SET NULL` para `sistema_id` y `constelacion_id` en objetos (no se pierde el objeto si se borra su sistema).
+- Eliminaciones en cascada se manejan en la capa de servicio (evita rutas de cascada múltiples en SQL Server).
 
 ---
 
@@ -185,27 +185,27 @@ SELECT o.nombre, o.distancia_tierra_al
 FROM objetos_astronomicos o
 JOIN sistemas_planetarios s ON o.sistema_id = s.id
 JOIN tipos_objeto t ON o.tipo_id = t.id
-WHERE s.nombre = 'Sistema Solar' AND t.nombre = 'Planeta'
+WHERE s.nombre = N'Sistema Solar' AND t.nombre = N'Planeta'
 ORDER BY o.distancia_tierra_al ASC;
 
 -- 2. Buscar objeto por nombre (exacto o parcial)
 SELECT * FROM objetos_astronomicos
-WHERE nombre ILIKE '%Marte%';
+WHERE nombre LIKE N'%Marte%';
 
 -- 3. Estrellas más masivas
-SELECT nombre, masa_kg
+SELECT o.nombre, o.masa_kg
 FROM objetos_astronomicos o
 JOIN tipos_objeto t ON o.tipo_id = t.id
-WHERE t.nombre = 'Estrella'
-ORDER BY masa_kg DESC
-LIMIT 10;
+WHERE t.nombre = N'Estrella'
+ORDER BY o.masa_kg DESC
+OFFSET 0 ROWS FETCH NEXT 10 ROWS ONLY;
 
 -- 4. Vecinos de un objeto en el grafo
 SELECT o2.nombre, r.distancia_al, r.tipo_relacion
 FROM relaciones r
 JOIN objetos_astronomicos o1 ON r.origen_id = o1.id
 JOIN objetos_astronomicos o2 ON r.destino_id = o2.id
-WHERE o1.nombre = 'Sol';
+WHERE o1.nombre = N'Sol';
 ```
 
 ---
@@ -221,4 +221,21 @@ WHERE o1.nombre = 'Sol';
 | `relaciones` | 2,000 – 10,000 |
 | `consultas_log` | crece con el uso |
 
-El volumen es moderado — PostgreSQL lo maneja sin problemas, y las estructuras en memoria pueden cargar el catálogo completo.
+El volumen es moderado — SQL Server lo maneja sin problemas, y las estructuras en memoria pueden cargar el catálogo completo.
+
+---
+
+## 7. Cadena de conexión (appsettings.json)
+
+```json
+{
+  "ConnectionStrings": {
+    "AstronomiaDB": "Server=localhost;Database=AstronomiaDB;Trusted_Connection=True;TrustServerCertificate=True;"
+  }
+}
+```
+
+Para autenticación con usuario/contraseña SQL Server:
+```json
+"AstronomiaDB": "Server=localhost;Database=AstronomiaDB;User Id=sa;Password=TuPassword;TrustServerCertificate=True;"
+```

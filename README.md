@@ -9,7 +9,7 @@ Sistema de Exploración y Análisis de Objetos Astronómicos.
 
 ## 1. Descripción del proyecto
 
-Aplicación web que permite explorar, analizar y visualizar información sobre objetos astronómicos (planetas, estrellas, galaxias, exoplanetas, constelaciones y agujeros negros). El sistema consume información desde APIs públicas de datos astronómicos, la procesa mediante estructuras de datos avanzadas y la almacena en PostgreSQL para consulta y análisis.
+Aplicación web que permite explorar, analizar y visualizar información sobre objetos astronómicos (planetas, estrellas, galaxias, exoplanetas, constelaciones y agujeros negros). El sistema consume información desde APIs públicas de datos astronómicos, la procesa mediante estructuras de datos avanzadas y la almacena en SQL Server para consulta y análisis.
 
 Este proyecto corresponde a la **Variante 8** del documento de requerimientos del curso.
 
@@ -19,8 +19,8 @@ Este proyecto corresponde a la **Variante 8** del documento de requerimientos de
 - **Específicos:**
   - Implementar al menos 5 estructuras de datos del curso (con mínimo 2 manuales).
   - Consumir información desde una API pública astronómica.
-  - Persistir los datos en una base de datos PostgreSQL.
-  - Ofrecer una interfaz web para búsqueda, ordenamiento y visualización.
+  - Persistir los datos en una base de datos SQL Server.
+  - Ofrecer una interfaz web (Razor Views) para búsqueda, ordenamiento y visualización.
   - Aplicar control de versiones mediante GitHub y ramas por funcionalidad.
 
 ---
@@ -31,7 +31,7 @@ Este proyecto corresponde a la **Variante 8** del documento de requerimientos de
 |--------|---------------|----------------|----------------|
 | *(Integrante 1)* | Backend & Estructuras de Datos | Integración API externa | *(pendiente)* |
 | *(Integrante 2)* | Base de Datos & API Externa | Backend (Hash, Grafo) | *(pendiente)* |
-| *(Integrante 3)* | Frontend & Documentación | QA / Pruebas | `eurizar` |
+| *(Integrante 3)* | Vistas & Documentación | QA / Pruebas | *(pendiente)* |
 
 > Completar esta tabla con los nombres reales y usuarios de GitHub del equipo.
 
@@ -41,10 +41,10 @@ Este proyecto corresponde a la **Variante 8** del documento de requerimientos de
 
 ```
 /
-├── backend/              # Código C# (.NET) — lógica, estructuras de datos, API REST
+├── backend/              # Proyecto ASP.NET Core MVC (.NET 8)
+│   ├── AstronomiaApp/    # Aplicación principal (Controllers, Views, Services, etc.)
 │   └── prototipo-api/    # Prueba inicial de consumo de API externa (Fase 1)
-├── frontend/             # Aplicación web — HTML, CSS, JavaScript
-├── database/             # Scripts SQL — schema, seed, migraciones
+├── database/             # Scripts SQL — schema, seed
 ├── docs/                 # Documentación del proyecto
 │   ├── arquitectura.md
 │   ├── estructuras.md
@@ -53,10 +53,12 @@ Este proyecto corresponde a la **Variante 8** del documento de requerimientos de
 │   ├── convenciones.md
 │   └── revision-1.md
 ├── PlanDeTrabajo.md      # Plan general del proyecto
-├── RequerimientoFinal.pdf  # Documento original del curso
+├── REQUIREMENTS.md       # Guía de instalación
 ├── .gitignore
 └── README.md
 ```
+
+> **Nota:** no existe carpeta `/frontend` separada. Las vistas Razor (`.cshtml`), CSS y JavaScript están integrados dentro del proyecto MVC en `backend/AstronomiaApp/Views/` y `backend/AstronomiaApp/wwwroot/`.
 
 ---
 
@@ -64,9 +66,10 @@ Este proyecto corresponde a la **Variante 8** del documento de requerimientos de
 
 | Capa | Tecnología |
 |------|------------|
-| Backend | C# con .NET 8 (ASP.NET Core Web API) |
-| Base de datos | PostgreSQL 15+ |
-| Frontend | HTML5 + CSS3 + JavaScript (vanilla) |
+| Framework web | ASP.NET Core MVC (.NET 8) |
+| Vistas (UI) | Razor Views (.cshtml) + HTML5 + CSS3 + JavaScript |
+| Base de datos | SQL Server 2019+ |
+| ORM | Entity Framework Core (`Microsoft.EntityFrameworkCore.SqlServer`) |
 | API externa | Solar System OpenData API (https://api.le-systeme-solaire.net) |
 | Control de versiones | Git + GitHub |
 
@@ -77,7 +80,8 @@ Este proyecto corresponde a la **Variante 8** del documento de requerimientos de
 ### Requisitos previos
 
 - [.NET SDK 8.0](https://dotnet.microsoft.com/download) o superior
-- [PostgreSQL 15+](https://www.postgresql.org/download/)
+- [SQL Server 2019+](https://www.microsoft.com/es-es/sql-server/sql-server-downloads) (Express o Developer — gratuitos)
+- [SQL Server Management Studio (SSMS)](https://aka.ms/ssmsfullsetup) o Azure Data Studio
 - Navegador web moderno (Chrome, Edge, Firefox)
 - Git
 
@@ -89,30 +93,41 @@ git clone https://github.com/eurizar/proyecto-astronomia-progra3.git
 cd proyecto-astronomia-progra3
 ```
 
-**2. Configurar la base de datos**
-```bash
-# Crear base de datos en PostgreSQL
-psql -U postgres -c "CREATE DATABASE astronomia_db;"
+**2. Crear la base de datos**
 
-# Ejecutar scripts
-psql -U postgres -d astronomia_db -f database/schema.sql
-psql -U postgres -d astronomia_db -f database/seed.sql
+En SSMS o Azure Data Studio:
+```sql
+CREATE DATABASE AstronomiaDB;
 ```
 
-**3. Ejecutar el backend**
+Luego ejecutar los scripts:
+```
+database/schema.sql   → crea las tablas
+database/seed.sql     → carga datos iniciales
+```
+
+**3. Configurar la cadena de conexión**
+
+Editar `backend/AstronomiaApp/appsettings.json`:
+```json
+{
+  "ConnectionStrings": {
+    "AstronomiaDB": "Server=localhost;Database=AstronomiaDB;Trusted_Connection=True;TrustServerCertificate=True;"
+  }
+}
+```
+
+**4. Ejecutar el backend**
 ```bash
-cd backend
+cd backend/AstronomiaApp
 dotnet restore
 dotnet run
-# El backend queda escuchando en http://localhost:5000
+# La aplicación queda en http://localhost:5000
 ```
 
-**4. Ejecutar el frontend**
-Abrir `frontend/index.html` en el navegador, o servirlo con un servidor local:
-```bash
-cd frontend
-python -m http.server 8080
-# Abrir http://localhost:8080
+**5. Abrir en el navegador**
+```
+http://localhost:5000
 ```
 
 > Nota: las instrucciones detalladas se completarán en cada fase del proyecto.

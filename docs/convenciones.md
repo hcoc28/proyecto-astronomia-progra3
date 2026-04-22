@@ -19,7 +19,8 @@ Reglas acordadas por los 3 integrantes para trabajar sin conflictos.
 **Formato del nombre de rama:**
 ```
 feature/lista-enlazada
-feature/endpoint-buscar
+feature/controlador-objetos
+feature/vistas-catalogo
 fix/ordenamiento-avl
 docs/actualizar-readme
 ```
@@ -41,7 +42,8 @@ Formato: **Conventional Commits simplificado**.
 
 **Ejemplos buenos:**
 ```
-feat(backend): agregar endpoint GET /api/objetos
+feat(controllers): agregar ObjetosController con accion Index
+feat(views): agregar vista Razor de catalogo de planetas
 fix(hash): corregir colision en tabla hash
 docs(readme): actualizar instrucciones de instalacion
 test(avl): agregar pruebas de rotaciones dobles
@@ -73,7 +75,7 @@ git merge develop      # resolver conflictos localmente
 ```
 
 **Requisitos del PR:**
-- Título con formato de commit: `feat(frontend): agregar pagina de busqueda`.
+- Título con formato de commit: `feat(views): agregar pagina de busqueda`.
 - Descripción con: qué cambia, por qué, cómo probarlo.
 - Al menos **1 revisor** distinto del autor debe aprobar antes del merge.
 - El autor hace el merge después de la aprobación.
@@ -99,7 +101,7 @@ Pasos para verificar que funciona.
 
 ## 2. Convenciones de código
 
-### 2.1 C# (Backend)
+### 2.1 C# (Backend / MVC)
 
 - **Clases:** `PascalCase` — `ObjetoAstronomico`, `TablaHash`.
 - **Métodos públicos:** `PascalCase` — `BuscarPorNombre()`.
@@ -117,66 +119,105 @@ Pasos para verificar que funciona.
   public ObjetoAstronomico BuscarPorNombre(string nombre) { ... }
   ```
 
-### 2.2 JavaScript (Frontend)
+### 2.2 Razor Views (.cshtml)
+
+- **Archivos de vista:** `PascalCase` — `Index.cshtml`, `Detalle.cshtml`.
+- **ViewModels:** sufijo `ViewModel` — `ObjetoViewModel`, `BusquedaViewModel`.
+- **IDs y clases CSS:** `kebab-case` — `buscador-input`, `card-planeta`.
+- **Indentación HTML:** 2 espacios.
+- **Evitar lógica compleja en la vista** — toda lógica va en el Controller o Service.
+
+### 2.3 JavaScript (wwwroot/js/)
 
 - **Variables y funciones:** `camelCase` — `obtenerPlanetas()`.
 - **Constantes globales:** `SCREAMING_SNAKE_CASE` — `API_BASE_URL`.
-- **Clases (si se usan):** `PascalCase`.
-- **Archivos:** `kebab-case` — `buscador-objetos.js`.
+- **Archivos:** `kebab-case` — `grafo-viewer.js`.
 - **Indentación:** 2 espacios.
 - **Uso obligatorio de `const` y `let`** (nunca `var`).
 - **Comillas:** simples por defecto, backticks para template strings.
 
-### 2.3 HTML / CSS
+### 2.4 CSS (wwwroot/css/)
 
 - **IDs y clases:** `kebab-case` — `buscador-input`, `card-planeta`.
-- **Un selector por línea** en CSS.
+- **Un selector por línea** en bloques multilínea.
 - **Indentación:** 2 espacios.
 
-### 2.4 SQL
+### 2.5 SQL
 
 - **Palabras clave en mayúsculas:** `SELECT`, `FROM`, `WHERE`, `JOIN`.
 - **Nombres de tablas y columnas:** `snake_case` — `objetos_astronomicos`.
-- **Tablas en plural** — `planetas`, no `planeta`.
+- **Tablas en plural** — `objetos_astronomicos`, no `objeto_astronomico`.
+- **Prefijo `N` en literales** de texto para Unicode — `N'Marte'`.
 
 ---
 
-## 3. Estructura de archivos
+## 3. Estructura del proyecto
 
-### 3.1 Backend (C#)
+### 3.1 Repositorio (carpetas raíz)
+
+```
+proyecto-astronomia-progra3/
+├── backend/          → Proyecto ASP.NET Core MVC (.NET 8)
+├── database/         → Scripts SQL (schema.sql, seed.sql)
+├── docs/             → Documentación del proyecto
+├── README.md
+├── REQUIREMENTS.md
+└── .gitignore
+```
+
+> **Nota:** no existe carpeta `/frontend` separada. Las vistas, CSS y JS están integrados dentro del proyecto MVC en `backend/AstronomiaApp/Views/` y `backend/AstronomiaApp/wwwroot/`.
+
+### 3.2 Proyecto ASP.NET Core MVC
 
 ```
 backend/
-├── Backend.Api/
-│   ├── Controllers/       # ObjetosController.cs, GrafoController.cs
-│   ├── Services/          # ObjetoService.cs, GrafoService.cs
-│   ├── Repositories/      # ObjetoRepository.cs
-│   ├── Models/            # ObjetoAstronomico.cs, Relacion.cs
-│   ├── EstructurasDatos/  # ListaEnlazada.cs, TablaHash.cs, ArbolAVL.cs, Grafo.cs
-│   ├── Integracion/       # SolarSystemApiClient.cs
+├── AstronomiaApp/
+│   ├── Controllers/
+│   │   ├── ObjetosController.cs      # MVC: devuelve Views (páginas)
+│   │   ├── GrafoController.cs        # MVC: devuelve Views
+│   │   └── Api/
+│   │       ├── ObjetosApiController.cs  # API: devuelve JSON (para AJAX)
+│   │       └── GrafoApiController.cs
+│   ├── Views/
+│   │   ├── Objetos/
+│   │   │   ├── Index.cshtml          # Catálogo de objetos
+│   │   │   ├── Detalle.cshtml        # Vista de un objeto
+│   │   │   └── Busqueda.cshtml       # Resultados de búsqueda
+│   │   ├── Grafo/
+│   │   │   └── Index.cshtml          # Visualización del grafo
+│   │   └── Shared/
+│   │       ├── _Layout.cshtml        # Plantilla base (nav, footer)
+│   │       └── _ValidationScripts.partial.cshtml
+│   ├── Models/
+│   │   ├── ObjetoAstronomico.cs      # Entidad EF Core
+│   │   ├── Relacion.cs
+│   │   └── ViewModels/
+│   │       └── ObjetoViewModel.cs
+│   ├── Services/
+│   │   ├── ObjetoService.cs
+│   │   └── GrafoService.cs
+│   ├── Repositories/
+│   │   └── ObjetoRepository.cs
+│   ├── EstructurasDatos/
+│   │   ├── ListaEnlazada.cs          # Manual
+│   │   ├── TablaHash.cs              # Manual
+│   │   ├── ArbolAVL.cs               # Manual
+│   │   └── Grafo.cs                  # Manual
+│   ├── Integracion/
+│   │   └── SolarSystemApiClient.cs
+│   ├── Data/
+│   │   └── AstronomiaDbContext.cs    # EF Core DbContext
+│   ├── wwwroot/
+│   │   ├── css/
+│   │   │   └── estilos.css
+│   │   ├── js/
+│   │   │   ├── grafo-viewer.js
+│   │   │   └── api.js
+│   │   └── assets/
 │   ├── Program.cs
 │   └── appsettings.json
-├── Backend.Tests/         # pruebas unitarias
-└── Backend.sln
-```
-
-### 3.2 Frontend
-
-```
-frontend/
-├── index.html
-├── busqueda.html
-├── detalle.html
-├── grafo.html
-├── css/
-│   └── estilos.css
-├── js/
-│   ├── api.js             # funciones fetch al backend
-│   ├── catalogo.js
-│   ├── buscador.js
-│   └── grafo-viewer.js
-└── assets/
-    └── imagenes/
+├── AstronomiaApp.Tests/
+└── AstronomiaApp.sln
 ```
 
 ---
@@ -221,10 +262,9 @@ frontend/
 
 | Propósito | Herramienta |
 |-----------|-------------|
-| IDE backend | Visual Studio 2022 / Rider / VS Code + C# Dev Kit |
-| Editor frontend | VS Code + Live Server |
-| Cliente PostgreSQL | pgAdmin 4 / DBeaver |
-| Cliente REST | Postman / Insomnia / Thunder Client (VS Code) |
+| IDE principal | Visual Studio 2022 (recomendado para MVC) / VS Code + C# Dev Kit |
+| Base de datos | SQL Server Management Studio (SSMS) / Azure Data Studio |
+| Cliente REST / pruebas API | Postman / Thunder Client (VS Code) |
 | Diagramas | draw.io / Excalidraw |
 | Git UI | GitHub Desktop / línea de comandos |
 
@@ -233,6 +273,6 @@ frontend/
 ## 7. Puntos de sincronización obligatorios
 
 - **Inicio de cada semana:** reunión de sync.
-- **Fin de cada fase:** día de integración (levantar todo y probar end-to-end).
+- **Fin de cada fase:** día de integración (levantar la app y probar end-to-end).
 - **Antes de cada revisión:** ensayo de presentación.
 - **Día de la revisión:** todos presentes, con el repositorio en estado estable.

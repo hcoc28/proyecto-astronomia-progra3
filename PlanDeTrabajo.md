@@ -11,15 +11,15 @@
 |-------|---------|
 | **Variante seleccionada** | Variante 8 — Sistema de Exploración y Análisis de Objetos Astronómicos |
 | **Modalidad** | Grupo de 3 integrantes |
-| **Backend** | C# (.NET) |
-| **Base de Datos** | PostgreSQL |
-| **Frontend** | Aplicación Web (HTML + CSS + JavaScript) |
+| **Framework** | ASP.NET Core MVC (.NET 8) |
+| **Base de Datos** | SQL Server |
+| **Interfaz de usuario** | Razor Views (.cshtml) + CSS + JavaScript |
 | **Control de versiones** | GitHub |
 | **Evaluaciones** | 3 revisiones parciales + presentación final |
 
 ### 1.1 Descripción breve del sistema
 
-Aplicación web que consume información astronómica desde APIs externas (Solar System OpenData API y/o Open Astronomy Catalogs) o datasets públicos, la procesa usando estructuras de datos avanzadas y la almacena en PostgreSQL para permitir consultas, búsquedas y análisis del universo.
+Aplicación web construida con ASP.NET Core MVC que consume información astronómica desde APIs externas (Solar System OpenData API), la procesa usando estructuras de datos avanzadas y la almacena en SQL Server. Los usuarios interactúan directamente con vistas Razor generadas por el servidor, con soporte adicional de JavaScript para funcionalidades dinámicas como la visualización del grafo.
 
 ### 1.2 Estructuras de datos a implementar
 
@@ -42,9 +42,9 @@ Para evitar problemas de integración al final, cada integrante tiene un **rol p
 
 | Integrante | Rol Principal | Rol Secundario | Responsabilidades clave |
 |------------|---------------|----------------|-------------------------|
-| **Integrante 1** | Backend & Estructuras de Datos | Integración API externa | Implementar estructuras (Lista, AVL), lógica de negocio, endpoints REST |
-| **Integrante 2** | Base de Datos & API Externa | Backend (Hash, Grafo) | Diseño BD, scripts PostgreSQL, consumo API, capa de acceso a datos |
-| **Integrante 3** | Frontend & Documentación | QA / Pruebas | UI web, consumo del backend propio, documentación y README |
+| **Integrante 1** | Backend & Estructuras de Datos | Integración API externa | Implementar estructuras (Lista, AVL), lógica de negocio, Controllers API |
+| **Integrante 2** | Base de Datos & API Externa | Backend (Hash, Grafo) | Diseño BD, scripts SQL Server, consumo API, DbContext EF Core |
+| **Integrante 3** | Vistas & Documentación | QA / Pruebas | Razor Views, CSS/JS, documentación y README |
 
 > Nota: los roles **secundarios** existen para que nadie quede bloqueado si un integrante no entrega a tiempo.
 
@@ -56,7 +56,7 @@ Para evitar problemas de integración al final, cada integrante tiene un **rol p
 |------|-----------|-------------------|----------|
 | **Fase 1** | Planeación y Diseño | 1–2 semanas | Primera revisión |
 | **Fase 2** | Implementación del Backend | 2–3 semanas | Segunda revisión |
-| **Fase 3** | Integración Completa (Frontend + Backend + BD) | 2 semanas | Tercera revisión |
+| **Fase 3** | Integración Completa (Vistas + Lógica + BD) | 2 semanas | Tercera revisión |
 | **Fase 4** | Pruebas, Documentación y Presentación | 1 semana | Presentación final |
 
 ---
@@ -99,7 +99,6 @@ Pasos concretos:
 2. Estructura obligatoria del PDF:
    ```
    /backend
-   /frontend
    /database
    /docs
    README.md
@@ -116,13 +115,13 @@ Pasos concretos:
 #### Tarea 1.3 — Diseñar arquitectura del sistema
 **Responsable:** Integrante 1
 **Apoyo:** Integrante 2
-**Salida:** Diagrama de arquitectura en `/docs/arquitectura.md` o `/docs/arquitectura.png`.
+**Salida:** Diagrama de arquitectura en `/docs/arquitectura.md`.
 
 Contenido mínimo:
-- Diagrama de 3 capas (Frontend ↔ Backend ↔ BD).
+- Diagrama MVC: navegador → Controllers → Views/Services → EF Core → SQL Server.
 - Módulo de integración con APIs externas.
 - Módulo de estructuras de datos dentro del backend.
-- Flujo de datos: API externa → Backend → Estructuras → BD → Frontend.
+- Flujo de datos: API externa → Backend → Estructuras → BD → Razor View.
 
 Herramientas sugeridas: draw.io, Excalidraw o Mermaid.
 
@@ -139,7 +138,7 @@ Debe incluir, por cada estructura:
 
 #### Tarea 1.5 — Diseñar base de datos
 **Responsable:** Integrante 2
-**Salida:** Modelo ER + script SQL inicial en `/database/schema.sql`.
+**Salida:** Modelo ER + script SQL en `/database/schema.sql`.
 
 Tablas mínimas sugeridas (revisar según alcance final):
 - `objetos_astronomicos` (id, nombre, tipo, masa, radio, distancia, temperatura, etc.)
@@ -149,8 +148,8 @@ Tablas mínimas sugeridas (revisar según alcance final):
 - `consultas_log` (id, usuario, consulta, fecha) *(opcional, para usar cola/pila)*
 
 Entregables:
-- Diagrama ER (`/docs/modelo-datos.png`).
-- Script `schema.sql` con `CREATE TABLE` + constraints.
+- Diagrama ER (`/docs/modelo-datos.md`).
+- Script `schema.sql` con `CREATE TABLE` + constraints (sintaxis SQL Server).
 - Script `seed.sql` con datos de prueba mínimos.
 
 #### Tarea 1.6 — Seleccionar API externa y hacer prueba de consumo
@@ -158,10 +157,8 @@ Entregables:
 **Apoyo:** Integrante 1
 **Salida:** Script C# mínimo que consulta la API y muestra resultados en consola. Guardar en `/backend/prototipo-api/`.
 
-Candidatos (del PDF):
-- Solar System OpenData API — https://api.le-systeme-solaire.net (recomendada, gratuita, sin API key).
-- Open Astronomy Catalogs — https://astroquery.readthedocs.io
-- Dataset alternativo: NASA Exoplanet Archive (CSV).
+API seleccionada:
+- Solar System OpenData API — https://api.le-systeme-solaire.net (gratuita, sin API key).
 
 Prueba mínima:
 - Hacer GET a un endpoint (ej. `/bodies`).
@@ -217,22 +214,23 @@ Secciones obligatorias:
 
 ## 6. Estrategia de Integración (para evitar problemas al final)
 
-Esta es la parte crítica. Los conflictos en proyectos grupales aparecen por: ramas desordenadas, contratos de API no definidos, nombres inconsistentes y falta de pruebas cruzadas.
+Esta es la parte crítica. Los conflictos en proyectos grupales aparecen por: ramas desordenadas, contratos no definidos, nombres inconsistentes y falta de pruebas cruzadas.
 
-### 6.1 Contratos de API internos (Backend ↔ Frontend)
+### 6.1 Contratos de rutas internas (Controllers)
 
-Antes de que el Integrante 3 empiece el frontend, Integrantes 1 y 2 deben publicar un archivo `/docs/api-contract.md` con los endpoints que expondrá el backend. Ejemplo:
+Antes de que el Integrante 3 empiece las vistas, Integrantes 1 y 2 deben publicar un archivo `/docs/api-contract.md` con las rutas MVC y los endpoints API que expondrá el backend. Ejemplo:
 
 ```
-GET  /api/objetos              → lista todos los objetos
-GET  /api/objetos/{id}         → objeto por id
-GET  /api/objetos/buscar?nombre=...  → búsqueda por nombre (usa hash)
-GET  /api/objetos/ordenar?por=distancia  → ordena (usa AVL)
-GET  /api/grafo/ruta?origen=...&destino=...  → ruta en grafo
-POST /api/consultas            → encola consulta
+GET  /Objetos              → vista: catálogo de todos los objetos
+GET  /Objetos/{id}         → vista: detalle de un objeto
+GET  /Objetos/Buscar?nombre=...  → vista: resultados de búsqueda
+GET  /Objetos/Ordenar?por=distancia  → vista: listado ordenado
+GET  /Grafo                → vista: visualización del grafo
+GET  /api/grafo/ruta?origen=...&destino=...  → JSON: ruta Dijkstra
+POST /api/consultas        → JSON: encola consulta
 ```
 
-Con contratos definidos desde el inicio, el frontend puede avanzar con datos mock mientras el backend se implementa.
+Con rutas definidas desde el inicio, los integrantes pueden avanzar con vistas mock mientras el backend se implementa.
 
 ### 6.2 Reglas de Git
 
@@ -250,28 +248,29 @@ Con contratos definidos desde el inicio, el frontend puede avanzar con datos moc
 
 ### 6.4 Pruebas de integración temprana
 
-Al terminar la **Fase 2**, los 3 integrantes deben hacer un **día de integración**: levantar backend + BD + frontend en la misma máquina, hacer una petición end-to-end y grabarla. Si algo falla, se arregla antes de avanzar.
+Al terminar la **Fase 2**, los 3 integrantes deben hacer un **día de integración**: levantar la app MVC + BD + datos reales en la misma máquina, navegar la UI completa y documentar lo que falla. Si algo falla, se arregla antes de avanzar.
 
 ### 6.5 Documentación continua
 
-Cada PR debe actualizar `README.md` y `/docs` si afecta arquitectura, endpoints o estructuras. No dejar documentación para el final.
+Cada PR debe actualizar `README.md` y `/docs` si afecta arquitectura, rutas o estructuras. No dejar documentación para el final.
 
 ---
 
 ## 7. Resumen de las Fases 2, 3 y 4 (vista previa)
 
 ### Fase 2 — Implementación del Backend (Segunda Revisión)
-- Implementación de las 5+ estructuras de datos (2 manuales).
-- Conexión a PostgreSQL con Entity Framework Core + Npgsql provider.
+- Implementación de las 5+ estructuras de datos (2+ manuales).
+- Conexión a SQL Server con Entity Framework Core (`Microsoft.EntityFrameworkCore.SqlServer`).
 - Consumo funcional del API con almacenamiento en BD.
-- Endpoints REST del backend listos.
+- Controllers MVC funcionando con datos reales.
+- Controllers API devolviendo JSON para AJAX.
 - Pruebas unitarias básicas de estructuras manuales.
 
 ### Fase 3 — Integración Completa (Tercera Revisión)
-- Frontend web funcional (listados, búsqueda, ordenamiento, visualización de grafo).
-- Conexión frontend ↔ backend.
-- Operaciones completas del sistema.
-- Uso visible de estructuras de datos para análisis.
+- Vistas Razor completas: catálogo, búsqueda, detalle, grafo.
+- Funcionalidades end-to-end operativas (buscar, ordenar, ver rutas).
+- JavaScript para interactividad (visualización del grafo en canvas/SVG).
+- Uso visible de estructuras de datos para análisis en pantalla.
 
 ### Fase 4 — Pruebas, Documentación y Presentación Final
 - Pruebas end-to-end.
@@ -302,9 +301,9 @@ Antes de presentar la Fase 1, verificar que todo lo siguiente esté en el reposi
 - [ ] `README.md` con descripción, integrantes, instrucciones de instalación.
 - [ ] `/docs/arquitectura.md` con diagrama.
 - [ ] `/docs/estructuras.md` con justificación de cada estructura.
-- [ ] `/docs/modelo-datos.png` + `/database/schema.sql` + `/database/seed.sql`.
+- [ ] `/docs/modelo-datos.md` + `/database/schema.sql` + `/database/seed.sql`.
 - [ ] `/backend/prototipo-api/` con prueba funcional de consumo API.
-- [ ] `/docs/api-contract.md` con endpoints planeados.
+- [ ] `/docs/api-contract.md` con rutas y endpoints planeados.
 - [ ] `/docs/convenciones.md` con reglas del equipo.
 - [ ] `/docs/revision-1.md` o PDF con el documento completo de la revisión.
 - [ ] Ramas `main`, `develop` y al menos 1 `feature/...` creadas.
@@ -312,5 +311,5 @@ Antes de presentar la Fase 1, verificar que todo lo siguiente esté en el reposi
 
 ---
 
-**Última actualización:** 2026-04-15
+**Última actualización:** 2026-04-21
 **Siguiente reunión recomendada:** acordar fecha de kickoff con los 3 integrantes esta semana.
